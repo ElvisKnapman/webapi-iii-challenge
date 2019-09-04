@@ -1,11 +1,28 @@
 const express = require("express");
 const userDB = require("./userDb.js");
+const postDB = require("../posts/postDb.js");
 
 const router = express.Router();
 
 router.post("/", (req, res) => {});
 
-router.post("/:id/posts", (req, res) => {});
+router.post("/:id/posts", validateUserId, validatePost, (req, res) => {
+  const { id } = req.params;
+  let post = req.body;
+  post.user_id = id;
+  console.log("the post", post);
+
+  postDB
+    .insert(post)
+    .then(resource => {
+      console.log(resource);
+      res.status(201).json(resource);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ message: "Post could not be added" });
+    });
+});
 
 router.get("/", (req, res) => {
   userDB
@@ -69,8 +86,12 @@ function validateUser(req, res, next) {}
 
 function validatePost(req, res, next) {
   const { text } = req.body;
+  // empty request body is empty object, check for valid properties
+  const bodyData = Object.entries(req.body);
+  console.log("the body", req.body);
 
-  if (!req.body) {
+  // if no properties on object
+  if (bodyData.length === 0) {
     return res.status(400).json({ message: "missing post data" });
   }
 
