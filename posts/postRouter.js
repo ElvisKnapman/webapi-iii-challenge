@@ -38,7 +38,25 @@ router.delete("/:id", validatePostId, (req, res) => {
     });
 });
 
-router.put("/:id", (req, res) => {});
+router.put("/:id", validatePostId, validatePost, (req, res) => {
+  const { id } = req.params;
+  const updatedPost = req.body;
+
+  postDB
+    .update(id, updatedPost)
+    .then(result => {
+      // result contains number of records deleted
+      if (result) {
+        res.status(200).json({ message: "post was updated successfully" });
+      } else {
+        res.status(400).json({ message: "post could not be updated" });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ message: "post could not be updated by server" });
+    });
+});
 
 // custom middleware
 
@@ -57,10 +75,27 @@ function validatePostId(req, res, next) {
       }
     })
     .catch(err => {
-      console.log(err => {
-        res.status(500).json({ message: "could not get post" });
-      });
+      console.log(err);
+      res.status(500).json({ message: "could not get post" });
     });
+}
+
+function validatePost(req, res, next) {
+  const { text } = req.body;
+  // empty request body is empty object, check for valid properties
+  const bodyData = Object.keys(req.body);
+  console.log("the body", req.body);
+
+  // if no properties on object
+  if (bodyData.length === 0) {
+    return res.status(400).json({ message: "missing post data" });
+  }
+
+  if (!text) {
+    return res.status(400).json({ message: "missing required text field" });
+  }
+
+  next();
 }
 
 module.exports = router;
