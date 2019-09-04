@@ -4,7 +4,18 @@ const postDB = require("../posts/postDb.js");
 
 const router = express.Router();
 
-router.post("/", (req, res) => {});
+router.post("/", validateUser, (req, res) => {
+  const newUser = req.body;
+  userDB
+    .insert(newUser)
+    .then(resource => {
+      res.status(201).json(resource);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ message: "new user could not be created" });
+    });
+});
 
 router.post("/:id/posts", validateUserId, validatePost, (req, res) => {
   const { id } = req.params;
@@ -82,12 +93,27 @@ function validateUserId(req, res, next) {
     });
 }
 
-function validateUser(req, res, next) {}
+function validateUser(req, res, next) {
+  const { body } = req;
+  // empty request body is empty object, check for valid properties
+  const bodyData = Object.keys(body);
+
+  if (bodyData.length === 0) {
+    console.log("body data in new user validate", bodyData);
+    return res.status(400).json({ message: "missing user data" });
+  }
+
+  if (!body.name) {
+    return res.status(400).json({ message: "missing required name field" });
+  }
+
+  next();
+}
 
 function validatePost(req, res, next) {
   const { text } = req.body;
   // empty request body is empty object, check for valid properties
-  const bodyData = Object.entries(req.body);
+  const bodyData = Object.keys(req.body);
   console.log("the body", req.body);
 
   // if no properties on object
