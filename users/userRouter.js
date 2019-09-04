@@ -67,9 +67,41 @@ router.get("/:id/posts", validateUserId, (req, res) => {
     });
 });
 
-router.delete("/:id", (req, res) => {});
+router.delete("/:id", validateUserId, (req, res) => {
+  const { id } = req.params;
 
-router.put("/:id", (req, res) => {});
+  userDB
+    .remove(id)
+    .then(result => {
+      // result returns number of records deleted
+      if (result) {
+        res.status(200).json({ message: "user deleted successfully" });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ message: "user could not be deleted." });
+    });
+});
+
+router.put("/:id", validateUserId, validateUser, (req, res) => {
+  const { id } = req.params;
+  const updatedUser = req.body;
+
+  userDB
+    .update(id, updatedUser)
+    .then(result => {
+      if (result) {
+        return res
+          .status(200)
+          .json({ message: "user update completed successfully" });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ message: "user could not be updated" });
+    });
+});
 
 //custom middleware
 
